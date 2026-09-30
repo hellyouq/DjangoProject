@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — Сакура{% endblock %}
+
+{% block content %}
+<div style="max-width:440px;margin:60px auto 0">
+  <div class="card reveal-in" style="padding:34px">
+    <div class="center">
+      <span class="eyebrow">добро пожаловать</span>
+      <h1 class="mt-s">Регистрация</h1>
+      <p class="muted tiny mt-s">3000 лепестков на старте</p>
+    </div>
+
+    <form method="post" class="stack gap-m mt-l">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="errlist">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
+      <div class="field">
+        <label for="id_username">Имя пользователя</label>
+        <input class="input" type="text" name="username" id="id_username" autofocus
+               value="{{ form.username.value|default:'' }}" autocomplete="username" required>
+        {% for e in form.username.errors %}<span class="err">{{ e }}</span>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="id_password1">Пароль</label>
+        <input class="input" type="password" name="password1" id="id_password1" autocomplete="new-password" required>
+        {% for e in form.password1.errors %}<span class="err">{{ e }}</span>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="id_password2">Повтори пароль</label>
+        <input class="input" type="password" name="password2" id="id_password2" autocomplete="new-password" required>
+        {% for e in form.password2.errors %}<span class="err">{{ e }}</span>{% endfor %}
+      </div>
+      <button class="btn btn-block btn-lg" type="submit">Создать аккаунт</button>
+    </form>
+
+    <div class="divider" style="margin:24px 0"></div>
+    <p class="center muted tiny">
+      Уже регистрировался? <a href="{% url 'login' %}" style="color:var(--s600);font-weight:700">Войти</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

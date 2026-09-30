@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Вход — Сакура{% endblock %}
+
+{% block content %}
+<div style="max-width:440px;margin:60px auto 0">
+  <div class="card reveal-in" style="padding:34px">
+    <div class="center">
+      <span class="eyebrow">с возвращением</span>
+      <h1 class="mt-s">Вход</h1>
+      <p class="muted tiny mt-s">Коллекция сохранится под аккаунтом</p>
+    </div>
+
+    <form method="post" class="stack gap-m mt-l">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="errlist">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
+      <div class="field">
+        <label for="id_username">Имя пользователя</label>
+        <input class="input" type="text" name="username" id="id_username" autofocus
+               value="{{ form.username.value|default:'' }}" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="id_password">Пароль</label>
+        <input class="input" type="password" name="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-block btn-lg" type="submit">Войти</button>
+    </form>
+
+    <div class="divider" style="margin:24px 0"></div>
+    <p class="center muted tiny">
+      Ещё нет аккаунта? <a href="{% url 'register' %}" style="color:var(--s600);font-weight:700">Создать</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

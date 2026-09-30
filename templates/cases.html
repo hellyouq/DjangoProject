@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_cases %}active{% endblock %}
+{% block title %}Кейсы — Сакура{% endblock %}
+
+{% block content %}
+<header class="mt-l mb-l">
+  <span class="eyebrow">12 миров</span>
+  <h1 class="mt-s">Кейсы</h1>
+  <p class="lead mt-s" style="max-width:60ch">
+    Каждый кейс — отдельный мир со своим набором девочек и шансами.
+    Дорогие кейсы щедрее на легенды, дешёвые — проще для первого лепестка.
+  </p>
+</header>
+
+<div class="row wrapf gap-s mb-l">
+  <a class="chip on" href="{% url 'cases' %}">Все</a>
+  <a class="chip" href="{% url 'cases' %}#cheap">До 1000 🌸</a>
+  <a class="chip" href="{% url 'cases' %}#mid">1000–4000 🌸</a>
+  <a class="chip" href="{% url 'cases' %}#top">4000+ 🌸</a>
+  <a class="chip" href="{% url 'collection' %}">Моя коллекция</a>
+</div>
+
+<div class="c-grid" id="cheap">
+  {% for c in cases %}{% if c.price < 1000 %}
+    {% include "partials/case_card.html" %}
+  {% endif %}{% endfor %}
+</div>
+
+<h2 class="mt-xl mb-m" id="mid">Средние кейсы <span class="dim" style="font-size:.9rem">· 1000–4000 🌸</span></h2>
+<div class="c-grid">
+  {% for c in cases %}{% if c.price >= 1000 and c.price < 4000 %}
+    {% include "partials/case_card.html" %}
+  {% endif %}{% endfor %}
+</div>
+
+<h2 class="mt-xl mb-m" id="top">Топ-кейсы <span class="dim" style="font-size:.9rem">· 4000+ 🌸</span></h2>
+<div class="c-grid">
+  {% for c in cases %}{% if c.price >= 4000 %}
+    {% include "partials/case_card.html" %}
+  {% endif %}{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

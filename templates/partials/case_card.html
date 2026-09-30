@@ -1,0 +1,25 @@
+{% load sakura_tags %}
+<a href="{{ c.get_absolute_url }}" class="c-card reveal-in">
+  <div class="c-art">
+    <img src="{% art_case c %}"
+         alt="{{ c.name }} — {{ c.tagline }}" loading="lazy" decoding="async">
+    {% if c.badge %}<span class="c-badge">{{ c.badge }}</span>{% endif %}
+    <div class="c-name">{{ c.name }}</div>
+  </div>
+  <div class="c-body">
+    <p class="c-tag">{{ c.tagline }}</p>
+
+    <div class="c-odds" title="Шансы по редкостям">
+      {% for o in c.odds %}<span style="width:{{ o.pct }}%;background:{{ o.color }}"></span>{% endfor %}
+    </div>
+    <div class="c-odds-legend">
+      {% for o in c.odds %}<b><i style="background:{{ o.color }}"></i>{{ o.pct }}%</b>{% endfor %}
+      <span class="dim" style="margin-left:auto">{{ c.pool_size }} персонажей</span>
+    </div>
+
+    <div class="c-foot">
+      <span class="c-price">🌸 {{ c.price }}</span>
+      <span class="btn btn-sm">Открыть</span>
+    </div>
+  </div>
+</a>

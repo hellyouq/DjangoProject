@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_market %}active{% endblock %}
+{% block title %}Биржа — Сакура{% endblock %}
+
+{% block content %}
+<header class="mt-l mb-l">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow">обмен копиями</span>
+      <h1 class="mt-s">Биржа</h1>
+      <p class="lead mt-s" style="max-width:62ch">
+        Дубли можно продать за лепестки и купить чужую удачу. Продавать можно только вторую
+        и последующие копии — последняя остаётся в коллекции навсегда. Комиссия биржи {{ fee }}%.
+      {% if static_mode %}
+        <br><span class="dim tiny">В статической версии биржа живёт в твоем браузере: лоты видны и покупаются только здесь.</span>{% endif %}</p>
+    </div>
+    <div class="purse" style="font-size:1.05rem;padding:14px 24px"><span class="purse-ico">🌸</span> {{ player.petals }}</div>
+  </div>
+</header>
+
+<div class="row wrapf gap-l" style="align-items:flex-start">
+
+  <div style="flex:1;min-width:340px">
+    <div class="row wrapf gap-s mb-m">
+      <a class="chip {% if not rarity %}on{% endif %}" href="{% url 'market' %}?sort={{ sort }}">Все лоты</a>
+      {% for r in rarities %}
+      <a class="chip {% if rarity == r.key %}on{% endif %}" href="{% url 'market' %}?rarity={{ r.key }}&sort={{ sort }}"
+         style="{% if rarity == r.key %}background:linear-gradient(120deg,{{ r.color }},{{ r.color }}cc){% else %}border-color:{{ r.color }}55{% endif %}">
+        {{ r.label }}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="row wrapf gap-s mb-m">
+      <span class="tiny dim">Сортировка:</span>
+      {% for key, pair in sorts.items %}
+      <a class="chip {% if sort == key %}on{% endif %}" href="{% url 'market' %}?sort={{ key }}&rarity={{ rarity }}">{{ pair.0 }}</a>
+      {% endfor %}
+    </div>
+
+    {% if static_mode %}
+      <div class="stack gap-s" id="lotList"></div>
+    {% elif listings %}
+      <div class="stack gap-s">
+        {% for li in listings %}
+        <div class="card card-tight row wrapf gap-m" style="align-items:center">
+          <a href="{{ li.girl.get_absolute_url }}" style="flex-shrink:0">
+            <img src="{{ li.girl.image_url }}" data-fallback="{% art_avatar li.girl %}"
+                 alt="{{ li.girl.name }}" width="72" height="72" loading="lazy"
+                 style="width:72px;height:72px;border-radius:18px;object-fit:cover;border:2.5px solid #fff;box-shadow:var(--shadow-m)">
+          </a>
+          <div style="flex:1;min-width:150px">
+            <span class="rar rar-{{ li.girl.rarity }}" style="font-size:.6rem">{{ li.girl.get_rarity_display }}</span>
+            <a href="{{ li.girl.get_absolute_url }}"><b style="font-family:var(--font-d);font-size:1.02rem">{{ li.girl.name }}</b></a>
+            <p class="dim tiny" style="margin-top:2px">
+              {{ li.girl.get_element_display }} · {{ li.girl.get_series_display }} · продавец <b>{{ li.seller.display_name }}</b>
+            </p>
+            <p class="dim tiny">средняя цена в рынке: <b>{{ li.market_price }} 🌸</b></p>
+          </div>
+          <div style="text-align:right">
+            <div class="c-price" style="font-size:1.2rem">🌸 {{ li.price }}</div>
+            <form method="post" action="{% url 'buy' li.pk %}" style="margin-top:8px">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn btn-sm" type="submit"
+                      {% if li.seller_id == player.pk or player.petals < li.price %}disabled{% endif %}>
+                {% if li.seller_id == player.pk %}Это твой лот
+                {% elif player.petals < li.price %}Не хватает
+                {% else %}Купить{% endif %}
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty card">
+        <div class="empty-ico">🪙</div>
+        <h3>Лотов пока нет</h3>
+        <p class="muted mt-s">Открой кейсы, собери дубли и выставляй их сюда.</p>
+        <a class="btn mt-m" href="{% url 'cases' %}">В кейсы</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div style="flex:0 0 min(360px,100%)" class="stack gap-l">
+    <div class="card">
+      <h3>Продать копию</h3>
+      <p class="dim tiny mt-s">Доступно к продаже: {{ sellable|length }} поз.</p>
+
+      {% if static_mode %}
+        <div class="stack gap-s mt-m" id="sellBox"></div>
+        <p class="dim tiny mt-m">Цена в лепестках, от {{ min_price }}. Покупатель платит полную сумму,
+          комиссия {{ fee }}% удерживается с продавца.</p>
+      {% elif sellable %}
+        <div class="stack gap-s mt-m">
+          {% for o in sellable %}
+          <form method="post" action="{% url 'sell' %}" class="row gap-s" style="align-items:center">
+            {% csrf_token %}
+            <input type="hidden" name="girl" value="{{ o.girl.pk }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <img src="{{ o.girl.image_url }}" data-fallback="{% art_avatar o.girl %}"
+                 alt="" width="40" height="40" loading="lazy"
+                 style="width:40px;height:40px;border-radius:12px;object-fit:cover">
+            <div class="grow" style="min-width:0">
+              <b style="font-size:.84rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.girl.name }}</b>
+              <span class="dim tiny">×{{ o.count }} · ориентир {{ o.girl.sell_hint }} 🌸</span>
+            </div>
+            <input class="input" type="number" name="price" min="{{ min_price }}" step="50"
+                   value="{{ o.girl.sell_hint }}" style="width:104px;padding:8px 10px;font-size:.82rem" required>
+            <button class="btn btn-xs" type="submit">Продать</button>
+          </form>
+          {% endfor %}
+        </div>
+        <p class="dim tiny mt-m">Цена в лепестках, от {{ min_price }}. Покупатель платит полную сумму,
+          комиссия {{ fee }}% удерживается с продавца.</p>
+      {% else %}
+        <div class="empty" style="padding:34px 10px">
+          <div class="empty-ico">🌱</div>
+          <p class="muted tiny">Нужна вторая копия девочки, чтобы её продать. Меняй кейсы!</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if static_mode or mine %}
+    <div class="card">
+      <h3>Мои лоты</h3>
+      {% if static_mode %}<div class="stack gap-s mt-s" id="myLots"></div>
+      {% else %}
+      <div class="stack gap-s mt-s">
+        {% for li in mine %}
+        <div class="row gap-s" style="padding:9px 12px;border-radius:14px;background:var(--s50);border:1px solid var(--line)">
+          <b class="grow tiny" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ li.girl.name }}</b>
+          <span class="tiny">🌸 {{ li.price }}</span>
+          {% if li.status == 'active' %}
+            <form method="post" action="{% url 'cancel' li.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn btn-xs btn-ghost" type="submit">Снять</button>
+            </form>
+          {% else %}
+            {% if li.status == "sold" %}<span class="rar rar-rare" style="font-size:.55rem">Продано</span>
+            {% else %}<span class="rar rar-common" style="font-size:.55rem">Снято</span>{% endif %}
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.4rem">🤝</div>
+      <h3 class="mt-s">Сделок на бирже</h3>
+      <b class="c-price" style="font-size:1.6rem" id="tradeCount">{{ sold_total }}</b>
+      <p class="dim tiny mt-s">Один этот сайт — обмен без посредников</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

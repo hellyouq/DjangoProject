@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_hall %}active{% endblock %}
+{% block title %}Зал славы — Сакура{% endblock %}
+
+{% block content %}
+<header class="mt-l mb-l">
+  <span class="eyebrow">рейтинг</span>
+  <h1 class="mt-s">Зал славы</h1>
+  <p class="lead mt-s">Те, кому сакура улыбнулась. Сортировка — по числу выбитых Легенд.</p>
+</header>
+
+{% if board %}
+<div class="card reveal-in" style="padding:8px 18px">
+  <table class="table">
+    <thead>
+      <tr><th style="width:70px">#</th><th>Игрок</th><th>Ранг</th><th>Открытий</th><th>Легенд</th><th>Лепестки</th></tr>
+    </thead>
+    <tbody>
+      {% for p in board %}
+      <tr{% if player and p.pk == player.pk %} style="background:var(--s50)"{% endif %}>
+        <td>
+          <span class="badge-rank {% if forloop.counter <= 3 %}top{% endif %}">{{ forloop.counter }}</span>
+        </td>
+        <td><b>{{ p.display_name }}</b>{% if player and p.pk == player.pk %} <span class="rar rar-rare" style="font-size:.58rem">это ты</span>{% endif %}</td>
+        <td class="dim">{{ p.rank_title }}</td>
+        <td>{{ p.total_opens }}</td>
+        <td>
+          {% if p.legendaries %}
+            <span class="rar rar-sakura">🌸 {{ p.legendaries }}</span>
+          {% else %}<span class="dim">—</span>{% endif %}
+        </td>
+        <td class="dim">{{ p.petals }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty card">
+  <div class="empty-ico">🏆</div>
+  <h3>Зал пока пуст</h3>
+  <p class="muted mt-s">Зарегистрируйся, открой кейсы и займи первое место.</p>
+  <a class="btn mt-m" href="{% url 'register' %}">Создать аккаунт</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

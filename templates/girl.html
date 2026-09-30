@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block title %}{{ girl.name }} — Сакура{% endblock %}
+
+{% block content %}
+<a class="chip mt-l" href="{% url 'collection' %}">← коллекция</a>
+
+<div class="card mt-m" style="padding:0;overflow:hidden">
+  <div class="row wrapf" style="align-items:stretch">
+    <div style="flex:0 0 clamp(240px,32vw,380px);position:relative;background:linear-gradient(160deg,{{ girl.accent }}33,#fff)">
+      <img src="{{ girl.image_url }}" data-fallback="{% art_avatar girl %}"
+           alt="{{ girl.name }}" width="380" height="440"
+           style="width:100%;height:100%;min-height:320px;object-fit:cover">
+      <div style="position:absolute;inset:auto 0 0 0;padding:18px;background:var(--hero-fade)">
+        <span class="rar rar-{{ girl.rarity }}">{{ girl.get_rarity_display }}</span>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:300px;padding:28px">
+      <span class="eyebrow">{{ girl.get_series_display }} · {{ girl.get_element_display }}</span>
+      <h1 class="mt-s">{{ girl.name }}</h1>
+      <p class="lead mt-s" style="font-family:var(--font-d)">{{ girl.title }}</p>
+
+      <blockquote class="serif mt-m" style="padding:16px 20px;border-left:3px solid {{ girl.accent }};
+              background:var(--s50);border-radius:0 16px 16px 0;font-size:1.06rem">
+        «{{ girl.quote }}»
+      </blockquote>
+
+      <p class="muted mt-m">{{ girl.lore }}</p>
+      <p class="dim tiny mt-s">Происхождение: {{ girl.origin }} · в саду с {{ girl.released|date:"d M Y" }}</p>
+
+      <div class="row wrapf gap-s mt-m">
+        {% if in_cases %}
+          {% for c in in_cases %}<a class="chip" href="{{ c.get_absolute_url }}">🌸 {{ c.name }}</a>{% endfor %}
+        {% endif %}
+      </div>
+
+      <div class="panel mt-m" style="padding:18px" data-girl="{{ girl.pk }}">
+        {% if static_mode %}
+          <div class="between">
+            <span class="muted tiny" id="ownLbl">Проверяем твою коллекцию…</span>
+            <b class="c-price" style="font-size:1.2rem" data-static="own">—</b>
+          </div>
+          <a class="btn btn-block mt-s" href="{{ in_cases.first.get_absolute_url }}">Выбить в кейсе</a>
+        {% elif owned %}
+          <div class="between">
+            <span class="muted tiny">В твоей коллекции</span>
+            <b class="c-price" style="font-size:1.2rem">×{{ owned.count }} · ◈ {{ owned.shards }}</b>
+          </div>
+          <p class="dim tiny mt-s">Первый раз: {{ owned.first_at|date:"d M Y, H:i" }}</p>
+        {% else %}
+          <div class="between">
+            <span class="muted tiny">Ещё не найдена</span>
+            <b class="dim">—</b>
+          </div>
+          <a class="btn btn-block mt-s" href="{{ in_cases.first.get_absolute_url }}">Выбить в кейсе</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-l reveal-in">
+  <h3>Характер</h3>
+  <div class="mt-m" style="display:grid;gap:14px">
+    {% for label, value, color in stats %}
+    <div>
+      <div class="between tiny" style="margin-bottom:5px">
+        <span class="muted">{{ label }}</span><b>{{ value }}</b>
+      </div>
+      <div class="pill-progress"><i style="width:{{ value }}%;background:linear-gradient(90deg,{{ color }},{{ color }}bb)"></i></div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="dim tiny mt-m">Сумма характера: <b>{{ girl.stat_total }}</b> · <span data-static="owners">всего в саду {{ total_owneds|default:0 }} копий у игроков</span></p>
+</div>
+
+<h2 class="mt-xl mb-m">Такой же редкости</h2>
+<div class="g-grid">
+  {% for g in related %}{% include "partials/girl_card.html" %}{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_cases %}active{% endblock %}
+{% block title %}Сакура — выбивай аниме-девочек из кейсов{% endblock %}
+
+{% block content %}
+{% for l in legends %}{% endfor %}
+
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <span class="eyebrow">✿ 12 кейсов · 91 девочка</span>
+      <h1>Выбирай свою<br><span class="grad-text l2">сакуру</span></h1>
+      <p class="lead">
+        Мягкий розово-белый сад, где каждую аниме-девочку можно выбить из кейса.
+        Мягкие лепестки, честные шансы и гарант: легенда выпадает не позже 60-го открытия.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-lg" href="{% url 'cases' %}">Открыть кейсы</a>
+        <a class="btn btn-ghost btn-lg" href="{% url 'collection' %}">Моя коллекция</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat"><b data-count="{{ stats.girls }}">0</b><span>ДЕВОЧЕК В САДУ</span></div>
+        <div class="hero-stat"><b data-count="{{ stats.cases }}">0</b><span>КЕЙСОВ</span></div>
+        <div class="hero-stat"><b data-count="{{ stats.legendaries }}">0</b><span>ЛЕГЕНД САКУРЫ</span></div>
+        <div class="hero-stat"><b data-count="{{ stats.opened }}">0</b><span>ОТКРЫТИЙ ВСЕГО</span></div>
+      </div>
+    </div>
+
+    <div class="hero-stage">
+      <div class="hero-cards">
+        {% for g in legends|slice:":5" %}
+        <a class="hero-card tier-{{ g.meta.tier }}{% if g.rarity == 'sakura' %} glow-sakura{% endif %}"
+           href="{{ g.get_absolute_url }}" style="z-index:{{ forloop.counter }}">
+          <img src="{{ g.image_url }}" data-fallback="{% art_avatar g %}"
+               alt="{{ g.name }}" width="320" height="426" loading="eager" decoding="async">
+          <span class="hc-rar">{{ g.get_rarity_display }}</span>
+          <span class="hc-name">{{ g.name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="mt-xl reveal-in">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow"> редкости </span>
+      <h2 class="mt-s">Пять уровней нежности</h2>
+      <p class="lead mt-s">Чем дороже кейс — тем выше шанс на легенду. Цвет карточки подсказывает редкость за секунду.</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="{% url 'collection' %}">Смотреть все</a>
+  </div>
+
+  <div class="kpi-grid mt-m">
+    {% for r in rarities %}
+    <a class="kpi tier-{{ r.tier }} reveal-in" href="{% url 'collection' %}?rarity={{ r.key }}"
+       style="border-top:4px solid {{ r.color }};text-decoration:none">
+      <span class="rar rar-{{ r.key }}" style="align-self:flex-start">{{ r.label }}</span>
+      <b style="color:{{ r.color }}">{% if r.tier == 0 %}0.5–6%{% elif r.tier == 1 %}2–16%{% elif r.tier == 2 %}4–27%{% elif r.tier == 3 %}26–32%{% else %}23–70%{% endif %}</b>
+      <span>в кейсах от 400 🌸</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+
+<section class="mt-xl reveal-in">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow"> кейсы </span>
+      <h2 class="mt-s">Выбери свой кейс</h2>
+      <p class="lead mt-s">Двенадцать миров: от тихого сада с лепестками до неонового Токио и Бездны.</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="{% url 'cases' %}">Все 12 кейсов</a>
+  </div>
+  <div class="c-grid mt-m">
+    {% for c in cases|slice:":6" %}{% include "partials/case_card.html" %}{% endfor %}
+  </div>
+</section>
+
+
+{% if recent %}
+<section class="mt-xl reveal-in">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow"> твои находки </span>
+      <h2 class="mt-s">Последние лепестки</h2>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="{% url 'profile' %}">Профиль</a>
+  </div>
+  <div class="g-grid mt-m">
+    {% for o in recent %}{% with g=o.girl owned=o %}{% include "partials/girl_card.html" %}{% endwith %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+
+<section class="mt-xl reveal-in">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow"> легенды </span>
+      <h2 class="mt-s">Легенды сакуры</h2>
+      <p class="lead mt-s">Шесть девочек, которые выпадают реже всего. Ищи их в дорогих кейсах.</p>
+    </div>
+  </div>
+  <div class="g-grid mt-m">
+    {% for g in legends %}{% include "partials/girl_card.html" %}
+    {% endfor %}
+  </div>
+</section>
+
+
+<section class="mt-xl">
+  <div class="card reveal-in" style="text-align:center;padding:60px 30px">
+    <span class="eyebrow"> почти готово </span>
+    <h2 class="mt-s">Осталось дождаться лепестка</h2>
+    <p class="lead mt-s" style="max-width:52ch;margin-inline:auto">
+      Собери все {{ stats.girls }} девочек сада. Пока в коллекции {{ player.owned_girls.count }} —
+      у тебя {{ player.collection_percent }}% счастья. 🌸
+    </p>
+    <div class="row wrapf gap-s mt-m" style="justify-content:center">
+      <a class="btn btn-lg" href="{% url 'cases' %}">Хочу попробовать</a>
+      <a class="btn btn-ghost btn-lg" href="{% url 'collection' %}">Открыть коллекцию</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // count-up for the hero stats
+  const io2 = new IntersectionObserver((es) => {
+    es.forEach((e) => {
+      if (!e.isIntersecting) return;
+      const el = e.target, to = +el.dataset.count, t0 = performance.now(), dur = 1100;
+      const step = (t) => {
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString('ru-RU');
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      io2.unobserve(el);
+    });
+  }, { threshold: .4 });
+  document.querySelectorAll('[data-count]').forEach((el) => io2.observe(el));
+
+  // reveal anything rendered after first paint
+  document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));
+</script>
+{% endblock %}

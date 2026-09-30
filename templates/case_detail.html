@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_cases %}active{% endblock %}
+{% block title %}{{ case.name }} — Сакура{% endblock %}
+
+{% block content %}
+<a class="chip mt-l" href="{% url 'cases' %}">← все кейсы</a>
+
+<div class="card mt-m" style="padding:0;overflow:hidden">
+  <div style="position:relative">
+    <img src="{% art_case case %}"
+         alt="{{ case.name }}" width="1280" height="420" style="width:100%;height:clamp(200px,32vw,360px);object-fit:cover"
+         data-parallax>
+    {% if case.badge %}<span class="c-badge">{{ case.badge }}</span>{% endif %}
+    <div style="position:absolute;inset:auto 0 0 0;padding:26px 28px;background:var(--hero-fade)">
+      <h1 style="color:#fff">{{ case.name }}</h1>
+      <p style="color:rgba(255,255,255,.9);font-size:1.02rem;margin-top:4px">{{ case.tagline }}</p>
+    </div>
+  </div>
+
+  <div class="card-body" style="padding:26px 28px 28px">
+    <div class="row wrapf gap-l between">
+      <div style="flex:1;min-width:260px">
+        <p class="muted">{{ case.description }}</p>
+
+        <div class="mt-m">
+          {% if case.has_legend %}
+            <div class="between tiny" style="margin-bottom:6px">
+              <span class="dim">Гарант легенды</span>
+              <b id="cdPity">{{ player.pity_counter }} / {{ player.PITY_LIMIT }}</b>
+            </div>
+            <div class="pill-progress {% if player.pity_counter > 44 %}tier-0{% endif %}" id="cdPityBar">
+              <i style="width:{{ player.pity_pct }}%"></i>
+            </div>
+            <p class="dim tiny mt-s">Каждая легенда сбрасывает счётчик. Без неё он растёт с каждым открытием,
+              и не позже чем через {{ player.PITY_LIMIT }} открытий подряд легенда твоя.</p>
+          {% else %}
+            <div class="between tiny" style="margin-bottom:6px">
+              <span class="dim">Потолок кейса</span>
+              <b>{{ case.odds|length }} редкостей</b>
+            </div>
+            <p class="dim tiny">
+              В этом кейсе нет Легенд сакуры — зато он самый доступный. За легендами иди в
+              <a href="{% url 'case' 'fukaimu' %}" style="color:var(--s600);font-weight:700">Бездну</a>
+              или <a href="{% url 'case' 'haloo' %}" style="color:var(--s600);font-weight:700">Нимб</a>.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="min-width:270px">
+        <div class="panel" style="padding:18px">
+          <div class="between">
+            <span class="muted tiny">Цена одного открытия</span>
+            <b class="c-price" style="font-size:1.3rem">🌸 {{ case.price }}</b>
+          </div>
+          <div class="row gap-s mt-m" style="display:flex">
+            <button class="btn grow" type="button" data-open="1" data-slug="{{ case.slug }}"
+                    data-price="{{ case.price }}">Открыть ×1</button>
+            <button class="btn btn-dark" type="button" data-open="10" data-slug="{{ case.slug }}"
+                    data-price="{{ case.price }}">×10 · {{ case.price }}0</button>
+          </div>
+          <p class="dim tiny mt-s" style="text-align:center">
+            У тебя <b data-purse-static>{{ player.petals }}</b> 🌸 &nbsp;·&nbsp; <button class="chip" data-daily type="button"
+              style="padding:3px 10px;font-size:.72rem">+500 за вход</button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider mt-l mb-l"></div>
+
+    <div class="row wrapf gap-l between">
+      <div style="min-width:290px">
+        <h3>Шансы по редкостям</h3>
+        <div class="mt-s">
+          {% for o in case_odds %}
+          <div class="odds-row">
+            <span class="rar rar-{{ o.key }}">{{ o.label }}</span>
+            <span class="odds-val" style="color:{{ o.color }}">{{ o.pct }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:280px">
+        <h3>Главные призы</h3>
+        <div class="g-grid mt-s" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
+          {% for g in top_prizes %}{% include "partials/girl_card.html" %}{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="mt-xl mb-m">Все {{ case.drops.count }} девочек кейса</h2>
+<div class="g-grid">
+  {% for d in case.drops.all %}{% with g=d.girl %}{% include "partials/girl_card.html" %}{% endwith %}{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));
+
+  // pool for the roulette strip, taken straight from the case's drop list
+  const pool = [
+    {% for d in case.drops.all %}{% with g=d.girl %}{name:"{{ g.name|escapejs }}",image:"{{ g.image_url }}",fallback:"{% art_avatar g %}",rarity:"{{ g.rarity }}",tier:{{ g.meta.tier }}}{% if not forloop.last %},{% endif %}{% endwith %}{% endfor %}
+  ];
+
+  document.querySelectorAll('[data-open]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.body.dataset.price = btn.dataset.price * btn.dataset.open;
+      SakuraOpen.open(btn.dataset.slug, btn.dataset.open, pool);
+    });
+  });
+
+  document.querySelectorAll('[data-daily]').forEach((b) => b.addEventListener('click', () => document.getElementById('purse').click()));
+
+  // refill the purse chip if the player got petals from elsewhere
+  document.addEventListener('sakura:opened', (e) => {
+    document.getElementById('purse').dataset.ready = '0';
+  });
+
+  // gentle parallax on the banner
+  const img = document.querySelector('[data-parallax]');
+  if (img && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    addEventListener('scroll', () => {
+      const y = Math.min(scrollY, 400);
+      img.style.transform = `scale(1.06) translateY(${y * 0.12}px)`;
+    }, { passive: true });
+  }
+</script>
+{% endblock %}

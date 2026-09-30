@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_coll %}active{% endblock %}
+{% block title %}Коллекция — Сакура{% endblock %}
+
+{% block content %}
+<header class="mt-l mb-l">
+  <div class="sec-head">
+    <div>
+      <span class="eyebrow">твоя коллекция</span>
+      <h1 class="mt-s" id="collCount">{{ have }} из {{ total }} девочек</h1>
+      <p class="lead mt-s">Открывай кейсы, чтобы находить новые лица. Недостающие — тусклые, их видно, но потрогать нельзя.</p>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'cases' %}">Найти ещё</a>
+  </div>
+
+  <div class="pill-progress mt-m" style="height:16px"><i id="collBar" style="width:{% widthratio have total 100 %}%"></i></div>
+  <p class="dim tiny mt-s" id="collRank">{{ player.collection_percent }}% сада расцвело · ранг: {{ player.rank_title }}</p>
+</header>
+
+<section class="kpi-grid mb-l" id="collKpis">
+  {% for b in by_rarity %}
+  <a class="kpi tier-{{ b.key }}" href="{% url 'collection' %}?rarity={{ b.key }}"
+     style="text-decoration:none;border-top:4px solid {{ b.color }}">
+    <span class="rar rar-{{ b.key }}" style="align-self:flex-start">{{ b.label }}</span>
+    <b style="color:{{ b.color }}">{{ b.have }}<span class="dim" style="font-size:.9rem">/{{ b.total }}</span></b>
+    <div class="pill-progress tier-{{ b.key }}"><i style="width:{{ b.pct }}%"></i></div>
+  </a>
+  {% endfor %}
+</section>
+
+<form class="card card-tight reveal-in" method="get" style="margin-bottom:24px">
+  <div class="row wrapf gap-s">
+    <div class="field" style="flex:1;min-width:200px">
+      <label for="q">Поиск</label>
+      <input class="input" id="q" type="search" name="q" value="{{ q }}" placeholder="Имя, титул или вселенная…">
+    </div>
+    <div class="field" style="min-width:170px">
+      <label for="element">Стихия</label>
+      <select class="input" id="element" name="element">
+        <option value="">Любая</option>
+        {% for e in elements %}<option value="{{ e.key }}" {% if element == e.key %}selected{% endif %}>{{ e.label }} ({{ e.n }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="min-width:150px">
+      <label for="owned">В коллекции</label>
+      <select class="input" id="owned" name="owned">
+        <option value="">Все</option>
+        <option value="have" {% if owned_filter == 'have' %}selected{% endif %}>Только мои</option>
+        <option value="missing" {% if owned_filter == 'missing' %}selected{% endif %}>Недостающие</option>
+      </select>
+    </div>
+    <div class="field" style="min-width:150px">
+      <label for="sort">Сортировка</label>
+      <select class="input" id="sort" name="sort">
+        <option value="rarity" {% if sort == 'rarity' %}selected{% endif %}>По редкости</option>
+        <option value="name" {% if sort == 'name' %}selected{% endif %}>По имени</option>
+        <option value="power" {% if sort == 'power' %}selected{% endif %}>По силе</option>
+        <option value="new" {% if sort == 'new' %}selected{% endif %}>По дате</option>
+      </select>
+    </div>
+    <div class="field" style="justify-content:flex-end">
+      <label>&nbsp;</label>
+      <div class="row gap-s">
+        <button class="btn btn-sm" type="submit">Применить</button>
+        <a class="btn btn-ghost btn-sm" href="{% url 'collection' %}">Сброс</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider" style="margin:16px 0"></div>
+  <div class="chips" id="collChips">
+    <a class="chip {% if not rarity %}on{% endif %}" href="{% url 'collection' %}?q={{ q }}&owned={{ owned_filter }}&sort={{ sort }}">Все редкости</a>
+    {% for b in by_rarity %}
+    <a class="chip {% if rarity == b.key %}on{% endif %}" href="{% url 'collection' %}?rarity={{ b.key }}&q={{ q }}&owned={{ owned_filter }}&sort={{ sort }}"
+       style="{% if rarity == b.key %}background:linear-gradient(120deg,{{ b.color }},{{ b.color }}cc){% else %}border-color:{{ b.color }}44{% endif %}">
+      {{ b.label }} · {{ b.have }}/{{ b.total }}
+    </a>
+    {% endfor %}
+  </div>
+</form>
+
+{% if static_mode %}
+  <div class="g-grid" id="collGrid"></div>
+{% elif grid %}
+<div class="g-grid">
+  {% for row in grid %}{% with g=row.girl owned=row.owned %}{% include "partials/girl_card.html" %}{% endwith %}{% endfor %}
+</div>
+{% else %}
+<div class="empty card">
+  <div class="empty-ico">🌸</div>
+  <h3>Никого не нашлось</h3>
+  <p class="muted mt-s">Попробуй ослабить фильтры или загляни в кейсы.</p>
+  <a class="btn mt-m" href="{% url 'cases' %}">Открыть кейс</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));</script>
+{% endblock %}

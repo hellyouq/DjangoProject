@@ -1,0 +1,22 @@
+{% load sakura_tags %}
+<a href="{{ g.get_absolute_url }}" class="g-card tier-{{ g.meta.tier }} reveal-in{% if dim_missing and not owned %} missing{% endif %}">
+  <div class="g-face">
+    <img src="{{ g.image_url }}" data-fallback="{% art_avatar g %}"
+         alt="{{ g.name }}" width="320" height="320" loading="lazy" decoding="async">
+    <span class="rar g-rar rar-{{ g.rarity }}">{{ g.get_rarity_display }}</span>
+    {% if owned %}<span class="g-count">×{{ owned.count }}</span>{% endif %}
+    {% if is_new %}<span class="g-new">NEW</span>{% endif %}
+  </div>
+  <div class="g-info">
+    <div class="g-name">{{ g.name }}</div>
+    <div class="g-title">{{ g.title }}</div>
+    <div class="g-meta">
+      <span class="g-elem"><i style="background:{{ g.accent }}"></i>{{ g.get_element_display }}</span>
+      {% if owned and owned.shards %}
+        <span class="g-shards">◈ {{ owned.shards }}</span>
+      {% elif not owned %}
+        <span class="locked-note">не найдена</span>
+      {% endif %}
+    </div>
+  </div>
+</a>

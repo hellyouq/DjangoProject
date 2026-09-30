@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load sakura_tags %}
+{% block nav_prof %}active{% endblock %}
+{% block title %}Профиль — Сакура{% endblock %}
+
+{% block content %}
+<header class="mt-l mb-l">
+  <div class="row wrapf gap-m between">
+    <div class="row gap-m">
+      <div class="avatar-btn" style="width:78px;height:78px;border-radius:26px;font-size:2rem">
+        {{ player.display_name|first|upper }}
+      </div>
+      <div>
+        <span class="eyebrow">{{ player.rank_title }}</span>
+        <h1 class="mt-s">{{ player.display_name }}</h1>
+        <p class="muted">
+          {% if static_mode %}Коллекция хранится в этом браузере
+          {% elif user.is_authenticated %}Аккаунт подключён · коллекция сохраняется навсегда
+          {% else %}Гостевой профиль · <a href="{% url 'register' %}" style="color:var(--s600);font-weight:700">зарегистрируйся</a>, чтобы сохранить коллекцию{% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="purse" style="font-size:1.1rem;padding:14px 26px">
+      <span class="purse-ico">🌸</span> {{ player.petals }}
+    </div>
+  </div>
+</header>
+
+<section class="kpi-grid mb-l" id="profKpis">
+  <div class="kpi"><b id="kpiOpens">{{ player.total_opens }}</b><span>ОТКРЫТИЙ КЕЙСОВ</span></div>
+  <div class="kpi"><b id="kpiHave">{{ have }}<span class="dim" style="font-size:.9rem">/{{ total }}</span></b><span>В КОЛЛЕКЦИИ</span></div>
+  <div class="kpi"><b id="kpiLegs">{{ player.legendaries }}</b><span>ЛЕГЕНД САКУРЫ</span></div>
+  <div class="kpi"><b id="kpiLuck">{{ luck }}%</b><span>УДАЧА (легенд/открытий)</span></div>
+</section>
+
+<div class="row wrapf gap-l" style="align-items:flex-start">
+  <div style="flex:1;min-width:320px" class="stack gap-l">
+
+    <div class="card">
+      <h3>Прогресс гаранта</h3>
+      <p class="muted tiny mt-s">
+        Легенда сакуры не может не выпасть: каждые {{ player.PITY_LIMIT }} открытий подряд одна из них твоя.
+      </p>
+      <div class="mt-m">
+        <div class="between" style="margin-bottom:8px">
+          <b style="font-size:1.3rem" id="pityVal">{{ player.pity_counter }} / {{ player.PITY_LIMIT }}</b>
+          <span class="dim tiny" id="pityLeft">ещё {{ player.pity_left }} открытий до гарантированной легенды</span>
+        </div>
+        <div class="pill-progress {% if player.pity_counter > 44 %}tier-0{% endif %}" style="height:16px" id="pityBar">
+          <i style="width:{{ player.pity_pct }}%"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Попадания по редкостям</h3>
+      <div class="mt-m" id="hitRows">
+        {% for h in hit_rows %}
+        <div class="odds-row">
+          <span class="rar rar-{{ h.key }}">{{ h.label }}</span>
+          <span class="grow" style="max-width:220px">
+            <span class="pill-progress {% if h.key == 'common' %}tier-4{% elif h.key == 'rare' %}tier-3{% elif h.key == 'epic' %}tier-2{% elif h.key == 'mythic' %}tier-1{% else %}tier-0{% endif %}">
+              <i style="width:{{ h.pct }}%;background:{{ h.color }}"></i>
+            </span>
+          </span>
+          <span class="odds-val" style="color:{{ h.color }}">{{ h.n }} · {{ h.pct }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>История открытий</h3>
+      {% if static_mode %}<div id="logBox"></div>
+      {% elif logs %}
+      <table class="table mt-s">
+        <thead><tr><th>Девочка</th><th>Кейс</th><th>Новая?</th><th>Когда</th></tr></thead>
+        <tbody>
+          {% for l in logs %}
+          <tr>
+            <td>
+              <a href="{{ l.girl.get_absolute_url }}" class="row gap-s">
+                <span class="rar rar-{{ l.girl.rarity }}" style="width:8px;height:8px;padding:0;border-radius:50%"></span>
+                <b>{{ l.girl.name }}</b>
+              </a>
+            </td>
+            <td class="dim">{{ l.case.name }}</td>
+            <td>{% if l.was_new %}<span class="rar rar-sakura" style="font-size:.6rem">NEW</span>{% else %}<span class="dim">—</span>{% endif %}</td>
+            <td class="dim tiny">{{ l.created_at|timesince }} назад</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty" style="padding:40px 10px">
+          <div class="empty-ico">🍃</div>
+          <p class="muted">Ты пока ничего не открывал.</p>
+          <a class="btn mt-m" href="{% url 'cases' %}">Выбрать кейс</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="flex:0 0 min(360px,100%)" class="stack gap-l">
+    <div class="card">
+      <h3>Самые частые</h3>
+      {% if static_mode %}<div class="stack gap-s mt-s" id="topBox"></div>
+      {% elif top %}
+      <div class="stack gap-s mt-s">
+        {% for o in top %}
+        <a href="{{ o.girl.get_absolute_url }}" class="row gap-s"
+           style="padding:9px 12px;border-radius:14px;background:var(--s50);border:1px solid var(--line)">
+          <img src="{{ o.girl.image_url }}" data-fallback="{% art_avatar o.girl %}"
+               alt="" width="38" height="38" loading="lazy" style="width:38px;height:38px;border-radius:12px;object-fit:cover">
+          <span class="grow" style="font-size:.86rem;font-weight:600">{{ o.girl.name }}</span>
+          <span class="rar rar-{{ o.girl.rarity }}">×{{ o.count }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted tiny mt-s">Пока пусто. Открой кейс!</p>
+      {% endif %}
+    </div>
+
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.6rem">🌸</div>
+      <h3 class="mt-s">Ежедневный подарок</h3>
+      <p class="muted tiny mt-s">+{{ player.DAILY_AMOUNT }} лепестков каждые 20 часов</p>
+      <button class="btn btn-block mt-m" type="button" id="dailyBtn"
+              {% if not player.is_daily_ready %}disabled{% endif %}>
+        {% if player.is_daily_ready %}Забрать подарок{% else %}Уже получено{% endif %}
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.reveal-in').forEach((el) => el.classList.add('in'));
+  const btn = document.getElementById('dailyBtn');
+  btn?.addEventListener('click', () => { document.getElementById('purse').click(); setTimeout(() => { btn.disabled = true; btn.textContent = 'Уже получено'; }, 900); });
+</script>
+{% endblock %}
